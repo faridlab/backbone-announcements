@@ -1,0 +1,93 @@
+# =============================================================================
+# Domain: Announcements
+# Entity: Announcement
+# Description: One HR-authored broadcast notice targeted at ONE org unit (company, branch or
+# department), with a publish window and read tracking. Publish is the emitting moment: one
+# tray notification per targeted user (the composing service's producer arm resolves the
+# audience ONCE at publish time — a membership snapshot, so later org changes never rewrite
+# history). `targeted_count` is that snapshot's persistence home (read-stats denominator).
+# Posts NO GL.
+# =============================================================================
+
+models:
+  - name: Announcement
+    collection: announcements
+    description: "One broadcast announcement for one org unit, with a publish window and read tracking"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique announcement id"
+      title:
+        type: string
+        attributes: ["@required", "@length(max=200)"]
+        description: "The notice headline"
+      body:
+        type: string
+        attributes: ["@required", "@length(max=20000)"]
+        description: "The notice body (markdown; sanitized at render time by the composing service)"
+      audience_type:
+        type: AnnouncementAudienceType
+        attributes: ["@required"]
+        description: "Which org-unit kind the audience is"
+      audience_unit_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "The audience org unit # logical FK to organization.org_units.id (one unit per row — a department + branch campaign is two rows)"
+      publish_from:
+        type: datetime
+        attributes: ["@required"]
+        description: "The moment the notice becomes visible (and emits) — publish now by setting it to the creation moment"
+      publish_until:
+        type: datetime?
+        description: "The moment the notice stops being visible (null = open-ended)"
+      status:
+        type: AnnouncementStatus
+        attributes: ["@required", "@default(draft)"]
+        description: "draft → scheduled → published → archived"
+      pinned:
+        type: bool
+        attributes: ["@default(false)"]
+        description: "Floats to the top of the employee's list"
+      targeted_count:
+        type: int
+        attributes: ["@default(0)"]
+        description: "Users in the audience at publish time — the read-stats denominator (the audience snapshot's persistence home)"
+      created_by:
+        type: uuid?
+        attributes: ["@exclude_from_foreign_key_check"]
+        description: "The author # logical FK to public.users.id"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      - type: index
+        fields: [status, publish_from]
+      - type: index
+        fields: [audience_unit_id]
+
+enums:
+  - name: AnnouncementStatus
+    description: "Announcement lifecycle"
+    variants:
+      - name: draft
+        description: "Authored, not yet scheduled or published — editable"
+        default: true
+      - name: scheduled
+        description: "Waiting for publish_from (the scheduler tick flips it)"
+      - name: published
+        description: "Visible to the audience; the publish event has been emitted"
+      - name: archived
+        description: "Removed from the employee list; read history kept"
+
+  - name: AnnouncementAudienceType
+    description: "Which org-unit kind an announcement targets"
+    variants:
+      - name: company
+        description: "Everyone in the company unit"
+        default: true
+      - name: branch
+        description: "Everyone under a branch unit"
+      - name: department
+        description: "Everyone under a department unit"

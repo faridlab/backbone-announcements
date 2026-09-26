@@ -1,0 +1,74 @@
+# =============================================================================
+# Announcements Module - Schema Index
+# =============================================================================
+# Version: 1
+# Description: HR broadcast announcements with audience targeting, publish window and read tracking
+#
+# Run `metaphor schema generate` (workspace) to generate code.
+# =============================================================================
+
+module: announcements
+version: 1
+schema: announcements
+# Tenancy: none, by design (ADR-0029). The module is tenant-agnostic and reusable —
+# it ships no scoping column and no fence declaration. A composing backend-service
+# that wants these tables org-scoped declares them in its tenancy.yaml; the
+# decorator installs org_unit_id, the RLS policy, the kind guard, and per-unit
+# uniques at composition time.
+description: "HR-authored broadcast notices targeted by org unit, with a publish window, read tracking, and one tray notification per targeted user at publish"
+
+# Module-level configuration
+config:
+  database: postgresql
+  soft_delete: true
+  audit: true
+  default_timestamps: true
+  generators:
+    disabled:
+      - graphql
+      - grpc
+      - proto
+      - openapi
+      - versioning
+      - event_store
+
+# External imports - reuse sapiens for user identity (same pattern as the sibling modules)
+external_imports:
+  - module: sapiens
+    types: [User]
+
+# Shared types available to all models in this module
+shared_types:
+  Timestamps:
+    created_at:
+      type: datetime
+      attributes: ["@default(now)"]
+      description: "Record creation timestamp"
+    updated_at:
+      type: datetime
+      attributes: ["@updated_at"]
+      description: "Last update timestamp"
+    deleted_at:
+      type: datetime?
+      description: "Soft delete timestamp"
+
+  Actors:
+    created_by:
+      type: uuid?
+      attributes: ["@foreign_key(sapiens.User.id)"]
+      description: "User who created this record"
+    updated_by:
+      type: uuid?
+      attributes: ["@foreign_key(sapiens.User.id)"]
+      description: "User who last updated this record"
+    deleted_by:
+      type: uuid?
+      attributes: ["@foreign_key(sapiens.User.id)"]
+      description: "User who deleted this record"
+
+  Metadata: [Timestamps, Actors]
+
+# Import all model files
+imports:
+  - announcement.model.yaml
+  - announcement_read.model.yaml

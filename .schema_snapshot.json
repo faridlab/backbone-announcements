@@ -1,0 +1,197 @@
+{
+  "tables": {
+    "announcements": {
+      "name": "announcements",
+      "columns": {
+        "id": {
+          "name": "id",
+          "data_type": "UUID",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "title": {
+          "name": "title",
+          "data_type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "body": {
+          "name": "body",
+          "data_type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "audience_type": {
+          "name": "audience_type",
+          "data_type": "ANNOUNCEMENTAUDIENCETYPE",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "audience_unit_id": {
+          "name": "audience_unit_id",
+          "data_type": "UUID",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "publish_from": {
+          "name": "publish_from",
+          "data_type": "TIMESTAMPTZ",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "publish_until": {
+          "name": "publish_until",
+          "data_type": "TIMESTAMPTZ",
+          "nullable": true,
+          "default": null,
+          "is_unique": false
+        },
+        "status": {
+          "name": "status",
+          "data_type": "ANNOUNCEMENTSTATUS",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "pinned": {
+          "name": "pinned",
+          "data_type": "BOOLEAN",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "targeted_count": {
+          "name": "targeted_count",
+          "data_type": "INTEGER",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "data_type": "UUID",
+          "nullable": true,
+          "default": null,
+          "is_unique": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "data_type": "JSONB",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        }
+      },
+      "indexes": {
+        "idx_announcements_status_publish_from": {
+          "name": "idx_announcements_status_publish_from",
+          "columns": [
+            "status",
+            "publish_from"
+          ],
+          "unique": false,
+          "index_type": "btree",
+          "where_predicate": null
+        },
+        "idx_announcements_audience_unit_id": {
+          "name": "idx_announcements_audience_unit_id",
+          "columns": [
+            "audience_unit_id"
+          ],
+          "unique": false,
+          "index_type": "btree",
+          "where_predicate": null
+        }
+      },
+      "primary_key": "id",
+      "company_scoped": false,
+      "company_fence": null,
+      "org_scoped": false,
+      "org_root_shared": false,
+      "org_fence": null
+    },
+    "announcement_reads": {
+      "name": "announcement_reads",
+      "columns": {
+        "id": {
+          "name": "id",
+          "data_type": "UUID",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "announcement_id": {
+          "name": "announcement_id",
+          "data_type": "UUID",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "data_type": "UUID",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "read_at": {
+          "name": "read_at",
+          "data_type": "TIMESTAMPTZ",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "data_type": "JSONB",
+          "nullable": false,
+          "default": null,
+          "is_unique": false
+        }
+      },
+      "indexes": {
+        "idx_announcement_reads_announcement_id_user_id": {
+          "name": "idx_announcement_reads_announcement_id_user_id",
+          "columns": [
+            "announcement_id",
+            "user_id"
+          ],
+          "unique": true,
+          "index_type": "unique",
+          "where_predicate": null
+        }
+      },
+      "primary_key": "id",
+      "company_scoped": false,
+      "company_fence": null,
+      "org_scoped": false,
+      "org_root_shared": false,
+      "org_fence": null
+    }
+  },
+  "enums": {
+    "announcementstatus": {
+      "name": "announcementstatus",
+      "variants": [
+        "draft",
+        "scheduled",
+        "published",
+        "archived"
+      ]
+    },
+    "announcementaudiencetype": {
+      "name": "announcementaudiencetype",
+      "variants": [
+        "company",
+        "branch",
+        "department"
+      ]
+    }
+  }
+}

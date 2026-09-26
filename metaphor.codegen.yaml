@@ -1,0 +1,15 @@
+# Codegen policy for announcements.
+#
+# `user_owned` globs are hand-written files that live inside generator-owned trees but are
+# NOT schema-derived. `metaphor schema generate [--force]` skips them wholesale (never reads,
+# merges, or deletes them). Everything else in src/ is regenerated from schema/models.
+#
+# Re-exports/declarations that must sit alongside generated code live inside
+# `// <<< CUSTOM ... // END CUSTOM` markers (service/mod.rs, presentation/http/mod.rs, lib.rs)
+# and are preserved by the marker mechanism, not listed here.
+
+user_owned:
+  # The hand-authored write path: the lifecycle verbs (schedule / publish / archive),
+  # the publish event sink port, and the audience-count read the publish verb stamps.
+  - "src/application/service/announcement_write_service.rs"
+  - "src/application/service/announcement_events.rs"

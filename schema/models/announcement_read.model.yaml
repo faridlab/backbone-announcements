@@ -1,0 +1,37 @@
+# =============================================================================
+# Domain: Announcements
+# Entity: AnnouncementRead
+# Description: The read ledger — one row the first time a user opens a published announcement.
+# Idempotent per (announcement_id, user_id): re-openings update nothing.
+# =============================================================================
+
+models:
+  - name: AnnouncementRead
+    collection: announcement_reads
+    description: "One user's first read of one announcement (the read-tracking ledger)"
+    fields:
+      id:
+        type: uuid
+        attributes: ["@id", "@default(uuid)"]
+        description: "Unique read id"
+      announcement_id:
+        type: uuid
+        attributes: ["@required", "@foreign_key(Announcement.id)"]
+        description: "The announcement read # FK to Announcement.id"
+      user_id:
+        type: uuid
+        attributes: ["@required", "@exclude_from_foreign_key_check"]
+        description: "The reader # logical FK to public.users.id"
+      read_at:
+        type: datetime
+        attributes: ["@required"]
+        description: "The first-open moment"
+      metadata:
+        type: Metadata
+        attributes: ["@audit_metadata"]
+        description: "Audit metadata"
+    indexes:
+      # The read ledger's idempotency: re-opening an announcement never adds a
+      # second row (the read mark upserts on this key).
+      - type: unique
+        fields: [announcement_id, user_id]
