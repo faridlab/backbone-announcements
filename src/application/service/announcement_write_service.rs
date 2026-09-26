@@ -311,7 +311,7 @@ impl AnnouncementWriteService {
         let status: String = row.try_get("status")?;
         if status == "published" {
             let count: i64 = sqlx::query_scalar(
-                "SELECT targeted_count FROM announcements.announcements WHERE id = $1",
+                "SELECT targeted_count::bigint FROM announcements.announcements WHERE id = $1",
             )
             .bind(id)
             .fetch_one(&mut *tx)
