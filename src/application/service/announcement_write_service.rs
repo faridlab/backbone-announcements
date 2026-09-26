@@ -363,6 +363,11 @@ impl AnnouncementWriteService {
     /// The scheduler tick: publish every scheduled row whose moment arrived.
     /// SKIP-locked so concurrent ticks divide the rows, never double-publish.
     pub async fn publish_due(&self, now: DateTime<Utc>) -> Result<Vec<PublishOutcome>, AnnouncementError> {
+        // The scan rides a scope-bound transaction: the fence would read a
+        // bare-pool SELECT as empty (fail closed), and the tick's caller
+        // wraps this whole call in an ambient org request scope.
+        let mut tx = self.pool.begin().await?;
+        self.bind_ambient(&mut tx).await?;
         let ids: Vec<Uuid> = sqlx::query_scalar(
             r#"SELECT id FROM announcements.announcements
                 WHERE status = 'scheduled' AND publish_from <= $1
@@ -371,8 +376,9 @@ impl AnnouncementWriteService {
                 FOR UPDATE SKIP LOCKED"#,
         )
         .bind(now)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *tx)
         .await?;
+        tx.commit().await?;
         let mut out = Vec::with_capacity(ids.len());
         for id in ids {
             out.push(self.publish_now(id).await?);
