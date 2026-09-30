@@ -3,6 +3,7 @@ name = "backbone-announcements"
 version = "0.1.5"
 edition = "2021"
 description = "HR broadcast announcements with audience targeting, publish window and read tracking"
+license = "MIT OR Apache-2.0"
 
 [lib]
 path = "src/lib.rs"
