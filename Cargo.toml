@@ -92,4 +92,4 @@ rand = "0.8"
 # TEST-ONLY edge: the dispatch seam proves a notification lands a REAL outbound message in backbone-
 # communication (the channel gateway) via an in-test CommunicationPort. Dev-dependency ONLY — the shipped
 # library reaches communication through the port, never a Cargo edge.
-backbone-communication = { path = "../backbone-communication" }
+backbone-communication = { version = "0.5.16" }
