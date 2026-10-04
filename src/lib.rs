@@ -11,6 +11,7 @@
 #![recursion_limit = "1024"]
 #![allow(unused_imports)]
 
+pub mod request_pool;
 pub mod domain;
 pub mod infrastructure;
 pub mod application;

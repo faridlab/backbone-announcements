@@ -194,4 +194,9 @@ pub fn create_guarded_announcement_routes(svc: Arc<AnnouncementWriteService>) ->
         .route("/announcements/:id/archive", post(archive_announcement))
         .route("/announcements/:id/read", post(mark_read))
         .with_state(svc)
+        // Bind the composer's request pool for every verb above: under a
+        // tenant mount the verbs run on that tenant's database; without one
+        // the composed pool stays the fallback. Applied after the routes, as
+        // a Router layer only wraps what was registered before the call.
+        .layer(axum::middleware::from_fn(crate::request_pool::bind_request_pool))
 }

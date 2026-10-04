@@ -13,3 +13,8 @@ user_owned:
   # the publish event sink port, and the audience-count read the publish verb stamps.
   - "src/application/service/announcement_write_service.rs"
   - "src/application/service/announcement_events.rs"
+  # The guarded verb routes and the request-pool binding they layer on.
+  - "src/presentation/http/guarded_routes.rs"
+  - "src/request_pool.rs"
+  # Hand-written behaviour tests.
+  - "tests/request_pool_and_schedule.rs"

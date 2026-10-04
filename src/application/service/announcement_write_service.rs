@@ -9,7 +9,9 @@
 //! The scheduler tick (`publish_due`) flips every `scheduled` row whose
 //! `publish_from` has arrived, SKIP-locked so two ticks never double-publish.
 //!
-//! Tenancy (ADR-0029): the module is tenant-agnostic. Writes relay the
+//! Tenancy (ADR-0029): the module is tenant-agnostic. Every call runs on the
+//! composer's request pool when one is bound (see [`crate::request_pool`]),
+//! else on the composed pool. Writes relay the
 //! ambient org request scope onto their transactions; the audience counter
 //! sets its own scope var to the audience subtree on a dedicated connection
 //! (the notification-producer pattern) so the count passes the composer's
@@ -96,6 +98,13 @@ impl AnnouncementWriteService {
         *self.events.write().expect("announcements event sink lock poisoned") = sink;
     }
 
+    /// The database this call runs on: the composer's request pool when one
+    /// is bound (a tenant mount, or a scheduled pass over one tenant), else
+    /// the composed pool.
+    fn rpool(&self) -> PgPool {
+        crate::request_pool::current().unwrap_or_else(|| self.pool.clone())
+    }
+
     fn events(&self) -> Arc<dyn AnnouncementEventSink> {
         self.events.read().expect("announcements event sink lock poisoned").clone()
     }
@@ -128,7 +137,7 @@ impl AnnouncementWriteService {
             }
         }
         let id = Uuid::new_v4();
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         self.bind_ambient(&mut tx).await?;
         sqlx::query(
             r#"INSERT INTO announcements.announcements
@@ -163,7 +172,7 @@ impl AnnouncementWriteService {
         publish_until: Option<DateTime<Utc>>,
         pinned: Option<bool>,
     ) -> Result<(), AnnouncementError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         self.bind_ambient(&mut tx).await?;
         let status: Option<String> = sqlx::query_scalar(
             "SELECT status::text FROM announcements.announcements WHERE id = $1 FOR UPDATE",
@@ -232,7 +241,7 @@ impl AnnouncementWriteService {
         _to: &str,
         stmt: &str,
     ) -> Result<bool, AnnouncementError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         self.bind_ambient(&mut tx).await?;
         let exists: Option<String> = sqlx::query_scalar(
             "SELECT status::text FROM announcements.announcements WHERE id = $1",
@@ -253,7 +262,7 @@ impl AnnouncementWriteService {
     /// var holds exactly that subtree, so the composer's fence admits the
     /// read whatever the caller's ambient scope is.
     async fn count_audience(&self, audience_unit: Uuid) -> Result<i64, AnnouncementError> {
-        let mut conn = self.pool.acquire().await?;
+        let mut conn = self.rpool().acquire().await?;
         sqlx::query("SELECT set_config('app.scope_unit_ids', $1, false)")
             .bind(
                 // The subtree itself, as a comma list (the producer pattern).
@@ -292,7 +301,7 @@ impl AnnouncementWriteService {
     /// Publish now (a draft or a scheduled row whose moment the operator
     /// pulls forward). Idempotent: an already-published row answers `already`.
     pub async fn publish_now(&self, id: Uuid) -> Result<PublishOutcome, AnnouncementError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         self.bind_ambient(&mut tx).await?;
         let row = sqlx::query(
             r#"SELECT title, audience_unit_id, status::text AS status
@@ -330,7 +339,7 @@ impl AnnouncementWriteService {
         let targeted = self.count_audience(audience_unit_id).await?;
         let published_at = Utc::now();
 
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         self.bind_ambient(&mut tx).await?;
         let moved = sqlx::query(
             r#"UPDATE announcements.announcements
@@ -363,19 +372,35 @@ impl AnnouncementWriteService {
     /// The scheduler tick: publish every scheduled row whose moment arrived.
     /// SKIP-locked so concurrent ticks divide the rows, never double-publish.
     pub async fn publish_due(&self, now: DateTime<Utc>) -> Result<Vec<PublishOutcome>, AnnouncementError> {
+        self.publish_due_from(now, None).await
+    }
+
+    /// The scheduler tick with a start point: only rows whose `publish_from`
+    /// falls on or after `start` are published. A row that came due before
+    /// the start point is left scheduled, untouched, for an operator to
+    /// publish now or cancel. A scheduler that begins running on a database
+    /// it never served passes the moment it began, so a backlog of long-past
+    /// notices is not broadcast all at once. `None` publishes everything due.
+    pub async fn publish_due_from(
+        &self,
+        now: DateTime<Utc>,
+        start: Option<DateTime<Utc>>,
+    ) -> Result<Vec<PublishOutcome>, AnnouncementError> {
         // The scan rides a scope-bound transaction: the fence would read a
         // bare-pool SELECT as empty (fail closed), and the tick's caller
         // wraps this whole call in an ambient org request scope.
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         self.bind_ambient(&mut tx).await?;
         let ids: Vec<Uuid> = sqlx::query_scalar(
             r#"SELECT id FROM announcements.announcements
                 WHERE status = 'scheduled' AND publish_from <= $1
+                  AND ($2::timestamptz IS NULL OR publish_from >= $2)
                 ORDER BY publish_from
                 LIMIT 100
                 FOR UPDATE SKIP LOCKED"#,
         )
         .bind(now)
+        .bind(start)
         .fetch_all(&mut *tx)
         .await?;
         tx.commit().await?;
@@ -389,7 +414,7 @@ impl AnnouncementWriteService {
     /// Mark one user's read — idempotent per (announcement, user); refuses an
     /// announcement that is not currently visible.
     pub async fn mark_read(&self, announcement_id: Uuid, user_id: Uuid) -> Result<bool, AnnouncementError> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.rpool().begin().await?;
         self.bind_ambient(&mut tx).await?;
         let row = sqlx::query(
             r#"SELECT status::text, publish_until FROM announcements.announcements
