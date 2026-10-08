@@ -248,6 +248,8 @@ impl backbone_orm::EntityRepoMeta for Announcement {
         m.insert("audience_unit_id".to_string(), "uuid".to_string());
         m.insert("audience_type".to_string(), "announcement_audience_type".to_string());
         m.insert("status".to_string(), "announcement_status".to_string());
+        m.insert("publish_from".to_string(), "timestamptz".to_string());
+        m.insert("publish_until".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {

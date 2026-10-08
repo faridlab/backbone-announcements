@@ -7,8 +7,6 @@
 pub mod crud_test_base;
 
 pub mod announcement_api_test;
-pub mod announcement_read_api_test;
 
 // Re-exports for convenience
 pub use announcement_api_test::*;
-pub use announcement_read_api_test::*;

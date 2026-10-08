@@ -197,6 +197,7 @@ impl backbone_orm::EntityRepoMeta for AnnouncementRead {
         m.insert("id".to_string(), "uuid".to_string());
         m.insert("announcement_id".to_string(), "uuid".to_string());
         m.insert("user_id".to_string(), "uuid".to_string());
+        m.insert("read_at".to_string(), "timestamptz".to_string());
         m
     }
     fn search_fields() -> &'static [&'static str] {

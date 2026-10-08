@@ -6,7 +6,6 @@
 //! to provide all 12 standard Backbone CRUD endpoints.
 
 pub mod announcement_handler;
-pub mod announcement_read_handler;
 
 // <<< CUSTOM
 pub mod guarded_routes;
@@ -14,6 +13,5 @@ pub mod guarded_routes;
 
 // Re-exports
 pub use announcement_handler::{create_announcement_routes, create_announcement_read_routes, create_announcement_write_routes};
-pub use announcement_read_handler::{create_announcement_read_routes as create_announcement_read_ledger_routes, create_announcement_read_read_routes as create_announcement_read_ledger_read_routes, create_announcement_read_write_routes as create_announcement_read_ledger_write_routes};
 // <<< CUSTOM
 // END CUSTOM

@@ -10,7 +10,6 @@ use std::sync::Arc;
 
 use super::{
     announcement_handler::create_announcement_routes,
-    announcement_read_handler::create_announcement_read_routes,
 };
 
 use crate::application::service::{
@@ -43,8 +42,6 @@ pub fn configure_routes(services: HttpServices) -> Router {
     Router::new()
         // Announcement routes (12 Backbone endpoints)
         .merge(create_announcement_routes(services.announcement))
-        // AnnouncementRead routes (12 Backbone endpoints)
-        .merge(create_announcement_read_routes(services.announcement_read))
 }
 
 /// Create an individual entity's routes (for modular configuration)
@@ -53,10 +50,6 @@ pub mod individual {
 
     pub fn announcement_routes(service: Arc<AnnouncementService>) -> Router {
         create_announcement_routes(service)
-    }
-
-    pub fn announcement_read_routes(service: Arc<AnnouncementReadService>) -> Router {
-        create_announcement_read_routes(service)
     }
 
 }
