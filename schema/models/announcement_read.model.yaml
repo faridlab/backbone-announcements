@@ -9,6 +9,14 @@ models:
   - name: AnnouncementRead
     collection: announcement_reads
     description: "One user's first read of one announcement (the read-tracking ledger)"
+    # No generic routes: the read ledger is written and read by the
+    # announcement verbs and the host's self-service query. Generating them
+    # would also collide with Announcement's read-only routes
+    # (create_announcement_read_routes names both).
+    generators:
+      disabled:
+        - handler
+        - integration-test
     fields:
       id:
         type: uuid
