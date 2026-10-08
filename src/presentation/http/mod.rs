@@ -8,9 +8,8 @@
 pub mod announcement_handler;
 pub mod announcement_read_handler;
 
-pub mod guarded_routes;
-
 // <<< CUSTOM
+pub mod guarded_routes;
 // END CUSTOM
 
 // Re-exports
