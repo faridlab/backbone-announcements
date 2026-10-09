@@ -56,6 +56,7 @@ use sqlx::PgPool;
 /// ```
 pub struct AnnouncementsModule {
     pub(crate) announcement_service: Arc<AnnouncementService>,
+    #[allow(dead_code)]
     pub(crate) announcement_read_service: Arc<AnnouncementReadService>,
     // <<< CUSTOM FIELDS
     /// The validated write engine — the lifecycle verbs (schedule / publish /

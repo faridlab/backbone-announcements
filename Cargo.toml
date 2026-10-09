@@ -1,6 +1,6 @@
 [package]
 name = "backbone-announcements"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "HR broadcast announcements with audience targeting, publish window and read tracking"
 license = "MIT OR Apache-2.0"
@@ -74,6 +74,7 @@ openapi = []
 validation = []
 # Transport adapter under src/infrastructure/gateway/ (ADR-0024 seam). Off by
 # default — the composing service opts in; the module core stays transport-free.
+gateway-queue = []
 
 [build-dependencies]
 tonic-build = "0.12"
