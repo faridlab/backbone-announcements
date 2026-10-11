@@ -25,8 +25,17 @@ pub mod presentation;
 pub mod seeders;
 pub mod exports;
 // <<< CUSTOM MODULES
-pub mod request_pool;
 // END CUSTOM
+
+// The module's extension (hand-written; ADR-0031).
+#[path = "lib.ext.rs"]
+mod lib_ext;
+pub use lib_ext::*;
+/// This crate's module and builder under fixed names, for the extension's `impl` blocks.
+#[allow(dead_code)]
+pub(crate) type ThisModule = AnnouncementsModule;
+#[allow(dead_code)]
+pub(crate) type ThisModuleBuilder = AnnouncementsModuleBuilder;
 
 // Re-exports for convenience - Domain entities
 pub use domain::entity::*;
@@ -58,12 +67,33 @@ pub struct AnnouncementsModule {
     pub(crate) announcement_service: Arc<AnnouncementService>,
     #[allow(dead_code)]
     pub(crate) announcement_read_service: Arc<AnnouncementReadService>,
+    /// The module's extension state (`lib.ext.rs`); its fields read through `Deref`.
+    pub(crate) ext: ModuleExt,
     // <<< CUSTOM FIELDS
-    /// The validated write engine — the lifecycle verbs (schedule / publish /
-    /// archive) and the read-mark upsert. Generic CRUD on an announcement row
-    /// bypasses the status machine; use this for every state change.
-    pub(crate) write_service: Arc<application::service::AnnouncementWriteService>,
     // END CUSTOM
+}
+
+impl std::ops::Deref for AnnouncementsModule {
+    type Target = ModuleExt;
+    fn deref(&self) -> &Self::Target {
+        &self.ext
+    }
+}
+
+impl std::ops::DerefMut for AnnouncementsModule {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ext
+    }
+}
+
+/// What the extension's `build` hook receives from the generated build (ADR-0031).
+#[allow(dead_code)]
+pub(crate) struct ModuleParts<'a> {
+    pub(crate) db_pool: &'a PgPool,
+    pub(crate) announcement_service: &'a Arc<AnnouncementService>,
+    pub(crate) announcement_repository: &'a Arc<AnnouncementRepository>,
+    pub(crate) announcement_read_service: &'a Arc<AnnouncementReadService>,
+    pub(crate) announcement_read_repository: &'a Arc<AnnouncementReadRepository>,
 }
 
 impl AnnouncementsModule {
@@ -111,30 +141,29 @@ impl AnnouncementsModule {
     }
 
     // <<< CUSTOM METHODS
-    /// The validated write engine (schedule / publish / archive, read-mark).
-    pub fn write_service(&self) -> Arc<application::service::AnnouncementWriteService> {
-        self.write_service.clone()
-    }
-
-    /// The recommended production surface: read-only CRUD for both entities +
-    /// the guarded verb routes (draft create/update stay generic writes on a
-    /// draft row; schedule/publish/archive and the read mark go through the
-    /// write service only).
-    pub fn guarded_routes(&self) -> Router {
-        use presentation::http::guarded_routes::create_guarded_announcement_routes;
-
-        Router::new()
-            .merge(self.readonly_routes())
-            .merge(create_guarded_announcement_routes(self.write_service.clone()))
-    }
     // END CUSTOM
 }
 
 /// Builder for AnnouncementsModule
 pub struct AnnouncementsModuleBuilder {
     db_pool: Option<PgPool>,
+    /// The builder's extension state (`lib.ext.rs`); its fields read through `Deref`.
+    ext: ModuleBuilderExt,
     // <<< CUSTOM BUILDER FIELDS
     // END CUSTOM
+}
+
+impl std::ops::Deref for AnnouncementsModuleBuilder {
+    type Target = ModuleBuilderExt;
+    fn deref(&self) -> &Self::Target {
+        &self.ext
+    }
+}
+
+impl std::ops::DerefMut for AnnouncementsModuleBuilder {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.ext
+    }
 }
 
 impl AnnouncementsModuleBuilder {
@@ -142,6 +171,7 @@ impl AnnouncementsModuleBuilder {
     pub fn new() -> Self {
         Self {
             db_pool: None,
+            ext: Default::default(),
             // <<< CUSTOM BUILDER DEFAULTS
             // END CUSTOM
         }
@@ -170,16 +200,22 @@ impl AnnouncementsModuleBuilder {
         let announcement_read_service = Arc::new(AnnouncementReadService::with_repository(announcement_read_repository.clone()));
 
         // <<< CUSTOM
-        // The validated write engine. Self-constructs from the pool; the event
-        // sink stays per-call (the composing service's concern).
-        let write_service = Arc::new(application::service::AnnouncementWriteService::new(db_pool.clone()));
         // END CUSTOM
+
+        // The extension builds its own state from what the generated build made.
+        let ext = self.ext.build(&ModuleParts {
+            db_pool: &db_pool,
+            announcement_service: &announcement_service,
+            announcement_repository: &announcement_repository,
+            announcement_read_service: &announcement_read_service,
+            announcement_read_repository: &announcement_read_repository,
+        })?;
 
         Ok(AnnouncementsModule {
             announcement_service,
             announcement_read_service,
+            ext,
             // <<< CUSTOM
-            write_service,
             // END CUSTOM
         })
     }
@@ -190,3 +226,6 @@ impl Default for AnnouncementsModuleBuilder {
         Self::new()
     }
 }
+
+// This directory's extension (hand-written; ADR-0031).
+include!("mod.ext.rs");

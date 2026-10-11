@@ -11,15 +11,12 @@ pub mod announcement_service;
 pub mod announcement_read_service;
 
 // <<< CUSTOM
-pub mod announcement_events;
-pub mod announcement_write_service;
 // END CUSTOM
 
 pub use announcement_service::AnnouncementService;
 pub use announcement_read_service::AnnouncementReadService;
 // <<< CUSTOM
-pub use announcement_events::{AnnouncementEvent, AnnouncementEventSink, LoggingSink};
-pub use announcement_write_service::{
-    AnnouncementError, AnnouncementWriteService, NewAnnouncement, PublishOutcome,
-};
 // END CUSTOM
+
+// This directory's extension (hand-written; ADR-0031).
+include!("mod.ext.rs");
