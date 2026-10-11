@@ -12,5 +12,3 @@ pub use announcement_event_handlers::AnnouncementEventHandler;
 pub use announcement_read_events::{AnnouncementReadEvent, AnnouncementReadEventPublisher, NoopAnnouncementReadEventPublisher};
 pub use announcement_read_event_handlers::AnnouncementReadEventHandler;
 
-// <<< CUSTOM
-// END CUSTOM

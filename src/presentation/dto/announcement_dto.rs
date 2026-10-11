@@ -336,7 +336,7 @@ impl backbone_core::ApplyUpdateDto<UpdateAnnouncementDto> for Announcement {
 // Custom DTOs
 // =============================================================================
 
-// <<< CUSTOM DTOs
 // Add custom DTOs specific to Announcement here.
 // This section will be preserved during regeneration.
 // >>> END CUSTOM DTOs
+

@@ -7,13 +7,9 @@
 
 pub mod announcement_handler;
 
-// <<< CUSTOM
-// END CUSTOM
 
 // Re-exports
 pub use announcement_handler::{create_announcement_routes, create_announcement_read_routes, create_announcement_write_routes};
-// <<< CUSTOM
-// END CUSTOM
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

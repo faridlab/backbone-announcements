@@ -17,9 +17,5 @@ pub fn announcement_validator() -> AnnouncementValidator {
     EntityValidator::new()
         .rule(RequiredString::new("title", |e: &Announcement| &e.title))
         .rule(RequiredString::new("body", |e: &Announcement| &e.body))
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
 }
 
-// <<< CUSTOM
-// END CUSTOM

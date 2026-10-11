@@ -24,8 +24,6 @@ pub mod application;
 pub mod presentation;
 pub mod seeders;
 pub mod exports;
-// <<< CUSTOM MODULES
-// END CUSTOM
 
 // The module's extension (hand-written; ADR-0031).
 #[path = "lib.ext.rs"]
@@ -69,8 +67,6 @@ pub struct AnnouncementsModule {
     pub(crate) announcement_read_service: Arc<AnnouncementReadService>,
     /// The module's extension state (`lib.ext.rs`); its fields read through `Deref`.
     pub(crate) ext: ModuleExt,
-    // <<< CUSTOM FIELDS
-    // END CUSTOM
 }
 
 impl std::ops::Deref for AnnouncementsModule {
@@ -140,8 +136,6 @@ impl AnnouncementsModule {
             .merge(create_announcement_read_routes(self.announcement_service.clone()))
     }
 
-    // <<< CUSTOM METHODS
-    // END CUSTOM
 }
 
 /// Builder for AnnouncementsModule
@@ -149,8 +143,6 @@ pub struct AnnouncementsModuleBuilder {
     db_pool: Option<PgPool>,
     /// The builder's extension state (`lib.ext.rs`); its fields read through `Deref`.
     ext: ModuleBuilderExt,
-    // <<< CUSTOM BUILDER FIELDS
-    // END CUSTOM
 }
 
 impl std::ops::Deref for AnnouncementsModuleBuilder {
@@ -172,8 +164,6 @@ impl AnnouncementsModuleBuilder {
         Self {
             db_pool: None,
             ext: Default::default(),
-            // <<< CUSTOM BUILDER DEFAULTS
-            // END CUSTOM
         }
     }
 
@@ -183,8 +173,6 @@ impl AnnouncementsModuleBuilder {
         self
     }
 
-    // <<< CUSTOM - custom builder methods
-    // END CUSTOM
 
     /// Build the module with configured dependencies
     pub fn build(self) -> anyhow::Result<AnnouncementsModule> {
@@ -199,8 +187,6 @@ impl AnnouncementsModuleBuilder {
         let announcement_read_repository = Arc::new(AnnouncementReadRepository::new(db_pool.clone()));
         let announcement_read_service = Arc::new(AnnouncementReadService::with_repository(announcement_read_repository.clone()));
 
-        // <<< CUSTOM
-        // END CUSTOM
 
         // The extension builds its own state from what the generated build made.
         let ext = self.ext.build(&ModuleParts {
@@ -215,8 +201,6 @@ impl AnnouncementsModuleBuilder {
             announcement_service,
             announcement_read_service,
             ext,
-            // <<< CUSTOM
-            // END CUSTOM
         })
     }
 }

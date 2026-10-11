@@ -32,5 +32,3 @@ pub type AnnouncementService = GenericCrudService<
     AnnouncementRepository,
 >;
 
-// <<< CUSTOM
-// END CUSTOM

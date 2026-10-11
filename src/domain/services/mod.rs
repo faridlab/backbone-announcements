@@ -8,5 +8,3 @@ pub mod announcement_read_domain_policy;
 pub use announcement_domain_policy::AnnouncementDomainPolicy;
 pub use announcement_read_domain_policy::AnnouncementReadDomainPolicy;
 
-// <<< CUSTOM
-// END CUSTOM

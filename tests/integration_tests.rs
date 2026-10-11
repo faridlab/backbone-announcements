@@ -23,3 +23,4 @@ async fn test_announcement_api() {
         panic!("{} tests failed", failed.len());
     }
 }
+

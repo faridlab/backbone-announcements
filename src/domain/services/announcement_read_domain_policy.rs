@@ -18,5 +18,3 @@ use crate::domain::entity::AnnouncementRead;
 /// service. `PermitAllPolicy` is the safe default until then.
 pub type AnnouncementReadDomainPolicy = PermitAllPolicy<AnnouncementRead>;
 
-// <<< CUSTOM
-// END CUSTOM

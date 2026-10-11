@@ -11,5 +11,3 @@ pub mod announcement_read_validator;
 pub use announcement_validator::{AnnouncementValidator, announcement_validator};
 pub use announcement_read_validator::{AnnouncementReadValidator, announcement_read_validator};
 
-// <<< CUSTOM
-// END CUSTOM

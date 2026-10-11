@@ -8,8 +8,6 @@ mod announcement_repository;
 mod announcement_read_repository;
 
 // Custom persistence modules
-// <<< CUSTOM
-// END CUSTOM
 
 // Re-exports
 pub use announcement_repository::AnnouncementRepository;
@@ -23,5 +21,3 @@ pub use backbone_orm::repository::{
 };
 
 // Re-export custom persistence types
-// <<< CUSTOM
-// END CUSTOM

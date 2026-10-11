@@ -14,10 +14,6 @@ pub type AnnouncementReadValidator = EntityValidator<AnnouncementRead>;
 /// Build a validator for AnnouncementRead with all schema-defined field rules.
 pub fn announcement_read_validator() -> AnnouncementReadValidator {
     EntityValidator::new()
-    // <<< CUSTOM RULES
-    // END CUSTOM RULES
         // No schema-derived rules — add custom rules above.
 }
 
-// <<< CUSTOM
-// END CUSTOM

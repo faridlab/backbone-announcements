@@ -9,5 +9,3 @@ pub use backbone_core::{Specification, AndSpecification, OrSpecification, NotSpe
 pub mod announcement_specification;
 pub mod announcement_read_specification;
 
-// <<< CUSTOM
-// END CUSTOM

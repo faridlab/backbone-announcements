@@ -10,13 +10,9 @@ pub use error::{ServiceError, ServiceResult};
 pub mod announcement_service;
 pub mod announcement_read_service;
 
-// <<< CUSTOM
-// END CUSTOM
 
 pub use announcement_service::AnnouncementService;
 pub use announcement_read_service::AnnouncementReadService;
-// <<< CUSTOM
-// END CUSTOM
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");
