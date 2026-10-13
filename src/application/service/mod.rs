@@ -13,6 +13,8 @@ pub mod announcement_read_service;
 
 pub use announcement_service::AnnouncementService;
 pub use announcement_read_service::AnnouncementReadService;
+pub use announcement_service::AnnouncementRowRules;
+pub use announcement_read_service::AnnouncementReadRowRules;
 
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");

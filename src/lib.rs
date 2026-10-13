@@ -181,11 +181,11 @@ impl AnnouncementsModuleBuilder {
 
         // Announcement service
         let announcement_repository = Arc::new(AnnouncementRepository::new(db_pool.clone()));
-        let announcement_service = Arc::new(AnnouncementService::with_repository(announcement_repository.clone()));
+        let announcement_service = Arc::new(AnnouncementService::with_repository(announcement_repository.clone()).with_guard(Arc::new(crate::application::service::AnnouncementRowRules)));
 
         // AnnouncementRead service
         let announcement_read_repository = Arc::new(AnnouncementReadRepository::new(db_pool.clone()));
-        let announcement_read_service = Arc::new(AnnouncementReadService::with_repository(announcement_read_repository.clone()));
+        let announcement_read_service = Arc::new(AnnouncementReadService::with_repository(announcement_read_repository.clone()).with_guard(Arc::new(crate::application::service::AnnouncementReadRowRules)));
 
 
         // The extension builds its own state from what the generated build made.
