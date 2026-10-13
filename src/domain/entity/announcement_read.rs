@@ -201,6 +201,9 @@ impl backbone_orm::EntityRepoMeta for AnnouncementRead {
     fn search_fields() -> &'static [&'static str] {
         &[]
     }
+    fn relations() -> &'static [(&'static str, &'static str, &'static str)] {
+        &[("announcement", "announcements", "announcementId")]
+    }
 }
 
 /// Builder for AnnouncementRead entity
