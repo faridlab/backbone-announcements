@@ -56,7 +56,7 @@ impl backbone_core::write_guard::WriteGuard<Announcement> for AnnouncementRowRul
         };
         let row = &row;
         let old = ctx.before.and_then(|b| serde_json::to_value(b).ok());
-        let mut shadow = Vec::new();
+        let shadow = Vec::new();
         let mut refuse = Vec::new();
         // `title_required` (@required on Announcement.title)
         if (create || (update && r::changed(old.as_ref(), row, &["title"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "title")), r::not(r::is_empty(r::trim(r::field(row, "title")))))) {
@@ -64,7 +64,7 @@ impl backbone_core::write_guard::WriteGuard<Announcement> for AnnouncementRowRul
         }
         // `title_max_length` (@length(max=200) on Announcement.title)
         if (create || (update && r::changed(old.as_ref(), row, &["title"]))) && !r::holds(&r::le(r::length(r::field(row, "title")), r::Val::Num(200.0_f64))) {
-            shadow.push(Violation::new("title", "max_length", "title must be at most 200 characters").with_param("max", 200_i64));
+            refuse.push(Violation::new("title", "max_length", "title must be at most 200 characters").with_param("max", 200_i64));
         }
         // `body_required` (@required on Announcement.body)
         if (create || (update && r::changed(old.as_ref(), row, &["body"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "body")), r::not(r::is_empty(r::trim(r::field(row, "body")))))) {
@@ -72,7 +72,7 @@ impl backbone_core::write_guard::WriteGuard<Announcement> for AnnouncementRowRul
         }
         // `body_max_length` (@length(max=20000) on Announcement.body)
         if (create || (update && r::changed(old.as_ref(), row, &["body"]))) && !r::holds(&r::le(r::length(r::field(row, "body")), r::Val::Num(20000.0_f64))) {
-            shadow.push(Violation::new("body", "max_length", "body must be at most 20000 characters").with_param("max", 20000_i64));
+            refuse.push(Violation::new("body", "max_length", "body must be at most 20000 characters").with_param("max", 20000_i64));
         }
         // `audience_unit_id_required` (@required on Announcement.audience_unit_id)
         if (create || (update && r::changed(old.as_ref(), row, &["audience_unit_id"]))) && !r::holds(&r::and(r::is_not_null(r::field(row, "audience_unit_id")), r::not(r::is_empty(r::trim(r::field(row, "audience_unit_id")))))) {
