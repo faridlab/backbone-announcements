@@ -16,5 +16,21 @@ pub use announcement_read_service::AnnouncementReadService;
 pub use announcement_service::AnnouncementRowRules;
 pub use announcement_read_service::AnnouncementReadRowRules;
 
+/// A `AnnouncementService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_announcement_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::AnnouncementRepository>,
+) -> AnnouncementService {
+    AnnouncementService::with_repository(repository).with_guard(std::sync::Arc::new(AnnouncementRowRules))
+}
+
+/// A `AnnouncementReadService` over `repository` with its write guard attached: the way to build it, so its writes are
+/// served only with the rules the schema declares.
+pub fn build_announcement_read_service(
+    repository: std::sync::Arc<crate::infrastructure::persistence::AnnouncementReadRepository>,
+) -> AnnouncementReadService {
+    AnnouncementReadService::with_repository(repository).with_guard(std::sync::Arc::new(AnnouncementReadRowRules))
+}
+
 // This directory's extension (hand-written; ADR-0031).
 include!("mod.ext.rs");
