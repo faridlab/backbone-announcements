@@ -192,3 +192,44 @@ async fn the_publish_pass_leaves_notices_due_before_its_start() {
     assert_eq!(all.len(), 1);
     assert_eq!(all[0].announcement_id, backlog);
 }
+
+async fn publish_until_of(pool: &PgPool, id: Uuid) -> Option<DateTime<Utc>> {
+    sqlx::query_scalar("SELECT publish_until FROM announcements.announcements WHERE id = $1")
+        .bind(id)
+        .fetch_one(pool)
+        .await
+        .unwrap()
+}
+
+/// A draft edit that leaves the end date out keeps it; only an explicit
+/// clear removes it.
+#[tokio::test]
+async fn a_partial_draft_edit_keeps_the_end_date() {
+    let Some(pool) = scratch("db").await else { return };
+    let svc = AnnouncementWriteService::new(pool.clone());
+    let unit = seed_unit_with_one_user(&pool).await;
+    let until = Utc.with_ymd_and_hms(2026, 12, 31, 17, 0, 0).unwrap();
+    let draft = svc
+        .create_draft(backbone_announcements::application::service::NewAnnouncement {
+            title: "Notice".into(),
+            body: "Body".into(),
+            audience_type: "company".into(),
+            audience_unit_id: unit,
+            publish_from: Utc::now(),
+            publish_until: Some(until),
+            pinned: false,
+            created_by: None,
+        })
+        .await
+        .expect("create draft");
+
+    svc.update_draft(draft, Some("Renamed".into()), None, None, None, None)
+        .await
+        .expect("edit the title");
+    assert_eq!(publish_until_of(&pool, draft).await, Some(until), "the end date survives a title edit");
+
+    svc.update_draft(draft, None, None, None, Some(None), None)
+        .await
+        .expect("clear the end date");
+    assert_eq!(publish_until_of(&pool, draft).await, None, "an explicit clear removes it");
+}

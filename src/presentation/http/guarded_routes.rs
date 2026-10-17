@@ -42,15 +42,33 @@ fn err_response(e: AnnouncementError) -> axum::response::Response {
     ).into_response()
 }
 
+/// `Option<Option<T>>` that tells an absent field (`None`, keep the stored
+/// value) from an explicit `null` (`Some(None)`, clear it). Use with
+/// `#[serde(default, deserialize_with = "double_option")]`.
+fn double_option<'de, T, D>(de: D) -> Result<Option<Option<T>>, D::Error>
+where
+    T: Deserialize<'de>,
+    D: serde::Deserializer<'de>,
+{
+    Deserialize::deserialize(de).map(Some)
+}
+
+// Request bodies take camelCase keys, as every other module's bodies do; the
+// snake_case spelling of each multi-word key is still accepted for callers
+// written against the earlier shape.
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct CreateAnnouncementBody {
     title: String,
     body: String,
     /// "company" | "branch" | "department"
+    #[serde(alias = "audience_type")]
     audience_type: String,
+    #[serde(alias = "audience_unit_id")]
     audience_unit_id: Uuid,
+    #[serde(default, alias = "publish_from")]
     publish_from: Option<DateTime<Utc>>,
-    #[serde(default)]
+    #[serde(default, alias = "publish_until")]
     publish_until: Option<DateTime<Utc>>,
     #[serde(default)]
     pinned: bool,
@@ -83,16 +101,19 @@ async fn create_announcement(
     }
 }
 
+/// A draft edit: a key left out keeps its value. `publishUntil: null` clears
+/// the end date.
 #[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct UpdateDraftBody {
     #[serde(default)]
     title: Option<String>,
     #[serde(default)]
     body: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "publish_from")]
     publish_from: Option<DateTime<Utc>>,
-    #[serde(default)]
-    publish_until: Option<DateTime<Utc>>,
+    #[serde(default, alias = "publish_until", deserialize_with = "double_option")]
+    publish_until: Option<Option<DateTime<Utc>>>,
     #[serde(default)]
     pinned: Option<bool>,
 }
@@ -199,4 +220,47 @@ pub fn create_guarded_announcement_routes(svc: Arc<AnnouncementWriteService>) ->
         // the composed pool stays the fallback. Applied after the routes, as
         // a Router layer only wraps what was registered before the call.
         .layer(axum::middleware::from_fn(crate::request_pool::bind_request_pool))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_create_body_reads_camel_case_and_the_earlier_snake_case() {
+        let unit = Uuid::new_v4();
+        for body in [
+            serde_json::json!({
+                "title": "T", "body": "B", "audienceType": "company",
+                "audienceUnitId": unit, "publishUntil": "2026-12-31T17:00:00Z", "pinned": true,
+            }),
+            serde_json::json!({
+                "title": "T", "body": "B", "audience_type": "company",
+                "audience_unit_id": unit, "publish_until": "2026-12-31T17:00:00Z", "pinned": true,
+            }),
+        ] {
+            let b: CreateAnnouncementBody = serde_json::from_value(body).expect("parses");
+            assert_eq!(b.audience_type, "company");
+            assert_eq!(b.audience_unit_id, unit);
+            assert!(b.publish_until.is_some());
+            assert!(b.pinned);
+        }
+    }
+
+    #[test]
+    fn the_draft_edit_tells_a_missing_end_date_from_a_cleared_one() {
+        let kept: UpdateDraftBody = serde_json::from_value(serde_json::json!({ "title": "T" })).unwrap();
+        assert_eq!(kept.publish_until, None, "left out: keep the end date");
+
+        let cleared: UpdateDraftBody =
+            serde_json::from_value(serde_json::json!({ "publishUntil": null })).unwrap();
+        assert_eq!(cleared.publish_until, Some(None), "null: clear it");
+
+        let set: UpdateDraftBody = serde_json::from_value(
+            serde_json::json!({ "publish_until": "2026-12-31T17:00:00Z", "publishFrom": "2026-12-01T00:00:00Z" }),
+        )
+        .unwrap();
+        assert!(matches!(set.publish_until, Some(Some(_))));
+        assert!(set.publish_from.is_some());
+    }
 }

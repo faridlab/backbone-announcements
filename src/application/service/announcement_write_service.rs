@@ -161,15 +161,19 @@ impl AnnouncementWriteService {
         Ok(id)
     }
 
-    /// Edit a draft (title, body, window, pin, audience). Only drafts are
-    /// editable — everything after is history.
+    /// Edit a draft (title, body, window, pin). Only drafts are editable —
+    /// everything after is history. The audience is fixed at creation.
+    ///
+    /// `None` leaves a field as it is. The end date can also be cleared:
+    /// `publish_until` is `None` to keep it, `Some(None)` to clear it and
+    /// `Some(Some(t))` to set it.
     pub async fn update_draft(
         &self,
         id: Uuid,
         title: Option<String>,
         body: Option<String>,
         publish_from: Option<DateTime<Utc>>,
-        publish_until: Option<DateTime<Utc>>,
+        publish_until: Option<Option<DateTime<Utc>>>,
         pinned: Option<bool>,
     ) -> Result<(), AnnouncementError> {
         let mut tx = self.rpool().begin().await?;
@@ -195,7 +199,7 @@ impl AnnouncementWriteService {
                   SET title = COALESCE($2, title),
                       body = COALESCE($3, body),
                       publish_from = COALESCE($4, publish_from),
-                      publish_until = $5,
+                      publish_until = CASE WHEN $7 THEN $5 ELSE publish_until END,
                       pinned = COALESCE($6, pinned)
                 WHERE id = $1"#,
         )
@@ -203,8 +207,9 @@ impl AnnouncementWriteService {
         .bind(title)
         .bind(body)
         .bind(publish_from)
-        .bind(publish_until)
+        .bind(publish_until.flatten())
         .bind(pinned)
+        .bind(publish_until.is_some())
         .execute(&mut *tx)
         .await?;
         tx.commit().await?;
