@@ -243,11 +243,3 @@ impl backbone_core::ApplyUpdateDto<UpdateAnnouncementReadDto> for AnnouncementRe
     }
 }
 
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to AnnouncementRead here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
-

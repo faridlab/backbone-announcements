@@ -44,14 +44,20 @@ pub struct CreateAnnouncementDto {
     pub publish_from: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "publish_until")]
     pub publish_until: Option<DateTime<Utc>>,
+    #[serde(default = "default_create_announcement_status")]
     pub status: AnnouncementStatus,
     #[cfg_attr(feature = "openapi", schema(example = true))]
+    #[serde(default)]
     pub pinned: bool,
     #[cfg_attr(feature = "openapi", schema(example = 42))]
-    #[serde(alias = "targeted_count")]
+    #[serde(default, alias = "targeted_count")]
     pub targeted_count: i32,
     #[serde(default, skip_serializing_if = "Option::is_none", alias = "created_by")]
     pub created_by: Option<Uuid>,
+}
+
+fn default_create_announcement_status() -> AnnouncementStatus {
+    AnnouncementStatus::Draft
 }
 
 // =============================================================================
@@ -116,8 +122,8 @@ pub struct PatchAnnouncementDto {
     #[cfg_attr(feature = "openapi", schema(example = "2024-01-01T00:00:00Z"))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "publish_from")]
     pub publish_from: Option<DateTime<Utc>>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "publish_until")]
-    pub publish_until: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "publish_until")]
+    pub publish_until: Option<Option<DateTime<Utc>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<AnnouncementStatus>,
     #[cfg_attr(feature = "openapi", schema(example = true))]
@@ -126,8 +132,8 @@ pub struct PatchAnnouncementDto {
     #[cfg_attr(feature = "openapi", schema(example = 42))]
     #[serde(skip_serializing_if = "Option::is_none", alias = "targeted_count")]
     pub targeted_count: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none", alias = "created_by")]
-    pub created_by: Option<Uuid>,
+    #[serde(default, deserialize_with = "crate::presentation::dto::double_option", alias = "created_by")]
+    pub created_by: Option<Option<Uuid>>,
 }
 
 impl PatchAnnouncementDto {
@@ -325,12 +331,4 @@ impl backbone_core::ApplyUpdateDto<UpdateAnnouncementDto> for Announcement {
         Ok(self)
     }
 }
-
-// =============================================================================
-// Custom DTOs
-// =============================================================================
-
-// Add custom DTOs specific to Announcement here.
-// This section will be preserved during regeneration.
-// >>> END CUSTOM DTOs
 
